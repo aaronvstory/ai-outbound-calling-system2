@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Call Status Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .status-box { background: #e3f2fd; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #2196f3; }
+        .error-box { background: #ffebee; border-left-color: #f44336; }
+        .success-box { background: #e8f5e8; border-left-color: #4caf50; }
+        button { background: #2196f3; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1976d2; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Call Status Debug Dashboard</h1>
+        
+        <div class="status-box">
+            <h3>Current System Status</h3>
+            <p><strong>Server:</strong> <span id="serverStatus">Checking...</span></p>
+            <p><strong>Last Update:</strong> <span id="lastUpdate">Never</span></p>
+        </div>
+        
+        <h3>Actions</h3>
+        <button onclick="checkStatus()">🔄 Check Status</button>
+        <button onclick="cleanupCalls()">🧹 Cleanup Old Calls</button>
+        <button onclick="testCall()">📞 Test Call</button>
+        
+        <h3>Recent Activity</h3>
+        <div id="activity"></div>
+        
+        <h3>System Logs</h3>
+        <pre id="logs">Waiting for activity...</pre>
+    </div>
+
+    <script>
+        let logCount = 0;
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            logElement.textContent = `[${timestamp}] ${message}\n` + logElement.textContent;
+            document.getElementById('lastUpdate').textContent = timestamp;
+            
+            // Keep only last 10 log entries
+            const lines = logElement.textContent.split('\n');
+            if (lines.length > 10) {
+                logElement.textContent = lines.slice(0, 10).join('\n');
+            }
+        }
+        
+        async function checkStatus() {
+            log('Checking server status...');
+            try {
+                const response = await fetch('/api/config');
+                const data = await response.json();
+                
+                document.getElementById('serverStatus').innerHTML = 
+                    data.synthflow_configured ? '✅ Online' : '❌ API Issues';
+                    
+                log(`Server status: ${data.synthflow_configured ? 'OK' : 'Issues detected'}`);
+                
+                // Also check recent calls
+                const callsResponse = await fetch('/api/calls');
+                const callsData = await callsResponse.json();
+                
+                const recentCalls = callsData.calls.slice(0, 3);
+                let html = '<h4>Recent Calls:</h4>';
+                
+                recentCalls.forEach(call => {
+                    const statusClass = call.status === 'failed' ? 'error-box' : 
+                                       call.status === 'monitoring_disabled' ? 'success-box' : 'status-box';
+                    html += `<div class="${statusClass}">
+                        <strong>${call.caller_name}</strong> → ${call.phone_number}<br>
+                        Status: ${call.status} | Created: ${new Date(call.created_at).toLocaleString()}
+                    </div>`;
+                });
+                
+                document.getElementById('activity').innerHTML = html;
+                
+            } catch (error) {
+                log(`Error checking status: ${error.message}`);
+                document.getElementById('serverStatus').innerHTML = '❌ Connection Error';
+            }
+        }
+        
+        async function cleanupCalls() {
+            log('Cleaning up stuck calls...');
+            try {
+                const response = await fetch('/api/calls/cleanup', { method: 'POST' });
+                const data = await response.json();
+                log(`Cleanup result: ${data.message}`);
+            } catch (error) {
+                log(`Cleanup error: ${error.message}`);
+            }
+        }
+        
+        async function testCall() {
+            log('Creating test call...');
+            try {
+                const testData = {
+                    caller_name: 'Debug Test',
+                    caller_phone: '+13203310678',
+                    phone_number: '+1-555-DEBUG-01',
+                    account_action: 'Test call - please ignore',
+                    additional_info: 'This is a debug test call'
+                };
+                
+                const response = await fetch('/api/calls', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    log(`Test call created: ${data.call_id}`);
+                } else {
+                    log(`Test call failed: ${data.error}`);
+                }
+                
+            } catch (error) {
+                log(`Test call error: ${error.message}`);
+            }
+        }
+        
+        // Auto-refresh every 10 seconds
+        setInterval(checkStatus, 10000);
+        
+        // Initial check
+        checkStatus();
+    </script>
+</body>
+</html>

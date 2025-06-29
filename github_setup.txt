@@ -1,0 +1,14 @@
+# GitHub Setup Instructions
+# Note: Git is not available in the WebContainer environment
+# These commands would need to be run in a local development environment with Git installed
+
+# To set up GitHub integration locally:
+# 1. Install Git on your local machine
+# 2. Initialize a Git repository: git init
+# 3. Add remote origin: git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+# 4. Add files: git add .
+# 5. Commit changes: git commit -m "Initial commit"
+# 6. Rename branch to main: git branch -M main
+# 7. Push to GitHub: git push -u origin main
+
+# For WebContainer deployment, use the built-in deployment options instead

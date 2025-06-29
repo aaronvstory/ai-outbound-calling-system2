@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Call Manager - Synthflow Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .call-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .call-form h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .call-status {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .call-status h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .status-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-pending { background: #ffc107; color: #856404; }
+        .status-dialing { background: #17a2b8; color: white; }
+        .status-in_progress { background: #007bff; color: white; }
+        .status-completed { background: #28a745; color: white; }
+        .status-failed { background: #dc3545; color: white; }
+        
+        .call-history {
+            grid-column: 1 / -1;
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+        }
+        
+        .call-history h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .call-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .call-table th,
+        .call-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .call-table th {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .call-table tr:hover {
+            background: #f1f3f4;
+        }
+        
+        .transcript-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI Call Manager</h1>
+            <p>Synthflow Integration - Automated Customer Support Calling</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="call-form">
+                <h2>📞 Create New Call</h2>
+                <form id="callForm">
+                    <div class="form-group">
+                        <label for="callerName">Your Name:</label>
+                        <input type="text" id="callerName" name="callerName" required 
+                               placeholder="e.g., John Boyle">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="callerPhone">Your Phone Number:</label>
+                        <select id="callerPhone" name="callerPhone" required style="width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 14px;">
+                            <option value="">Select your phone number...</option>
+                            <option value="+13203310678">+1 (320) 331-0678</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Call Destination:</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" required 
+                               placeholder="e.g., 1-800-123-4567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="accountAction">Account Action Request:</label>
+                        <textarea id="accountAction" name="accountAction" required 
+                                placeholder="e.g., I need you to make an adjustment on my account to $0"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="additionalInfo">Additional Information (Optional):</label>
+                        <textarea id="additionalInfo" name="additionalInfo" 
+                                placeholder="e.g., Account number: 123456, Date of birth: 01/01/1990"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="submitBtn">
+                        🚀 Start Call
+                    </button>
+                </form>
+            </div>
+            
+            <div class="call-status">
+                <h2>📊 Call Status</h2>
+                <div id="statusContainer">
+                    <p style="color: #666; text-align: center; padding: 40px;">
+                        No active calls. Create a call to see real-time status updates.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="call-history">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>📋 Call History</h2>
+                    <button onclick="cleanupStuckCalls()" class="btn" style="width: auto; padding: 10px 20px; background: #ffc107; color: #856404;">
+                        🧹 Cleanup Stuck Calls
+                    </button>
+                </div>
+                <div id="callHistoryContainer">
+                    <table class="call-table" id="callTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Caller</th>
+                                <th>Destination</th>
+                                <th>Action</th>
+                                <th>Status</th>
+                                <th>Success</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="callTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transcript Modal -->
+    <div id="transcriptModal" class="transcript-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeTranscriptModal()">&times;</span>
+            <h3>Call Transcript</h3>
+            <div id="transcriptContent"></div>
+        </div>
+    </div>
+
+    <!-- Socket.IO for real-time updates -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+    <script>
+        // Fallback if Socket.IO doesn't load
+        if (typeof io === 'undefined') {
+            console.warn('Socket.IO not loaded, using fallback mode');
+            window.io = function() {
+                return {
+                    on: function() {},
+                    emit: function() {},
+                    connect: function() {}
+                };
+            };
+        }
+    </script>
+    
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        let currentCallId = null;
+        
+        // DOM elements
+        const callForm = document.getElementById('callForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusContainer = document.getElementById('statusContainer');
+        const callTableBody = document.getElementById('callTableBody');
+        
+        // Socket event handlers
+        socket.on('connect', function() {
+            console.log('Connected to server');
+            addAlert('Connected to call monitoring system', 'success');
+        });
+        
+        socket.on('call_update', function(data) {
+            console.log('Call update:', data);
+            updateCallStatus(data);
+        });
+        
+        // Fallback polling if Socket.IO fails
+        let pollInterval = null;
+        
+        socket.on('disconnect', function() {
+            console.log('Socket disconnected, switching to polling mode');
+            if (currentCallId && !pollInterval) {
+                pollInterval = setInterval(() => {
+                    pollCallStatus(currentCallId);
+                }, 5000);
+            }
+        });
+        
+        async function pollCallStatus(callId) {
+            try {
+                const response = await fetch(`/api/calls/${callId}`);
+                const result = await response.json();
+                
+                if (result.call) {
+                    const mockSocketData = {
+                        call_id: callId,
+                        status: result.call.status,
+                        success: result.call.success,
+                        transcript: result.call.transcript,
+                        message: `Call status: ${result.call.status}`
+                    };
+                    updateCallStatus(mockSocketData);
+                    
+                    // Stop polling if call is complete
+                    if (['completed', 'failed', 'no_answer', 'busy'].includes(result.call.status)) {
+                        clearInterval(pollInterval);
+                        pollInterval = null;
+                    }
+                }
+            } catch (error) {
+                console.error('Polling error:', error);
+            }
+        }
+        
+        // Form submission
+        callForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                caller_name: document.getElementById('callerName').value,
+                caller_phone: document.getElementById('callerPhone').value,
+                phone_number: document.getElementById('phoneNumber').value,
+                account_action: document.getElementById('accountAction').value,
+                additional_info: document.getElementById('additionalInfo').value
+            };
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '📞 Creating Call...';
+                
+                console.log('Submitting call data:', formData);
+                
+                const response = await fetch('/api/calls', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                if (result.success) {
+                    currentCallId = result.call_id;
+                    addAlert(`Call initiated successfully! ID: ${result.call_id}`, 'success');
+                    callForm.reset();
+                    
+                    // Start polling as backup
+                    if (!pollInterval) {
+                        pollInterval = setInterval(() => {
+                            pollCallStatus(currentCallId);
+                        }, 3000);
+                    }
+                } else {
+                    addAlert(`Error: ${result.error || 'Unknown error'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                addAlert(`Network Error: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Start Call';
+            }
+        });
+        
+        function updateCallStatus(data) {
+            // Update current call status
+            if (data.call_id === currentCallId) {
+                const statusHtml = `
+                    <div class="status-item">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>Call ID:</strong> ${data.call_id}<br>
+                                <strong>Status:</strong> <span class="status-badge status-${data.status}">${data.status}</span><br>
+                                ${data.message ? `<strong>Message:</strong> ${data.message}<br>` : ''}
+                                ${data.assistant_phone ? `<strong>Calling From:</strong> ${data.assistant_phone}<br>` : ''}
+                                ${data.success !== undefined ? `<strong>Success:</strong> ${data.success ? '✅ Yes' : '❌ No'}<br>` : ''}
+                                ${data.error ? `<strong>Error:</strong> <span style="color: #dc3545;">${data.error}</span><br>` : ''}
+                            </div>
+                            ${data.status === 'in_progress' || data.status === 'initiated' ? '<div class="live-indicator"></div>' : ''}
+                        </div>
+                        ${data.transcript ? `
+                            <div style="margin-top: 10px;">
+                                <button onclick="showTranscript('${data.call_id}')" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px;">
+                                    📝 View Transcript
+                                </button>
+                                <button onclick="terminateCall('${data.call_id}')" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px; background: #dc3545; margin-left: 10px;">
+                                    ⏹️ Terminate
+                                </button>
+                            </div>
+                        ` : (data.status === 'in_progress' || data.status === 'dialing' || data.status === 'initiated') ? `
+                            <div style="margin-top: 10px;">
+                                <button onclick="terminateCall('${data.call_id}')" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px; background: #dc3545;">
+                                    ⏹️ Terminate Call
+                                </button>
+                            </div>
+                        ` : data.status === 'failed' && data.error && data.error.includes('phone number') ? `
+                            <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+                                <strong>🔧 How to Fix:</strong><br>
+                                1. Go to <a href="https://app.synthflow.ai" target="_blank">Synthflow Dashboard</a><br>
+                                2. Edit the assistant configuration<br>
+                                3. Assign phone number +13203310678<br>
+                                4. Save and try again
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                statusContainer.innerHTML = statusHtml;
+            }
+            
+            // Refresh call history
+            loadCallHistory();
+        }
+        
+        async function loadCallHistory() {
+            try {
+                const response = await fetch('/api/calls');
+                const result = await response.json();
+                
+                if (result.calls) {
+                    renderCallHistory(result.calls);
+                }
+            } catch (error) {
+                console.error('Error loading call history:', error);
+            }
+        }
+        
+        function renderCallHistory(calls) {
+            const tbody = document.getElementById('callTableBody');
+            tbody.innerHTML = '';
+            
+            calls.forEach(call => {
+                const row = document.createElement('tr');
+                const createdAt = new Date(call.created_at).toLocaleString();
+                const truncatedAction = call.account_action.length > 50 ? 
+                    call.account_action.substring(0, 50) + '...' : call.account_action;
+                
+                row.innerHTML = `
+                    <td>${createdAt}</td>
+                    <td>${call.caller_name}<br><small>${call.caller_phone}</small></td>
+                    <td>${call.phone_number}</td>
+                    <td title="${call.account_action}">${truncatedAction}</td>
+                    <td><span class="status-badge status-${call.status}">${call.status}</span></td>
+                    <td>${call.success === null ? '-' : (call.success ? '✅' : '❌')}</td>
+                    <td>
+                        ${call.transcript ? `<button onclick="showTranscript('${call.id}')" style="font-size: 12px; padding: 4px 8px;">📝 Transcript</button>` : '-'}
+                        ${call.status === 'in_progress' || call.status === 'dialing' ? `<button onclick="terminateCall('${call.id}')" style="font-size: 12px; padding: 4px 8px; background: #dc3545; color: white; margin-left: 5px;">⏹️ Stop</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        async function showTranscript(callId) {
+            try {
+                const response = await fetch(`/api/calls/${callId}`);
+                const result = await response.json();
+                
+                if (result.call && result.call.transcript) {
+                    document.getElementById('transcriptContent').innerHTML = `
+                        <h4>Call Details:</h4>
+                        <p><strong>Caller:</strong> ${result.call.caller_name} (${result.call.caller_phone})</p>
+                        <p><strong>Destination:</strong> ${result.call.phone_number}</p>
+                        <p><strong>Action:</strong> ${result.call.account_action}</p>
+                        <p><strong>Status:</strong> ${result.call.status}</p>
+                        <p><strong>Success:</strong> ${result.call.success ? 'Yes' : 'No'}</p>
+                        <hr>
+                        <h4>Transcript:</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; white-space: pre-wrap; max-height: 400px; overflow-y: auto;">
+                            ${result.call.transcript}
+                        </div>
+                    `;
+                    document.getElementById('transcriptModal').style.display = 'block';
+                } else {
+                    addAlert('Transcript not available', 'error');
+                }
+            } catch (error) {
+                addAlert(`Error loading transcript: ${error.message}`, 'error');
+            }
+        }
+        
+        function closeTranscriptModal() {
+            document.getElementById('transcriptModal').style.display = 'none';
+        }
+        
+        async function terminateCall(callId) {
+            if (!confirm('Are you sure you want to terminate this call?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/calls/${callId}/terminate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addAlert('Call terminated successfully', 'success');
+                    loadCallHistory(); // Refresh the history
+                } else {
+                    addAlert(`Failed to terminate call: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addAlert(`Error terminating call: ${error.message}`, 'error');
+            }
+        }
+        
+        async function cleanupStuckCalls() {
+            try {
+                const response = await fetch('/api/calls/cleanup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    addAlert(result.message, 'success');
+                    loadCallHistory(); // Refresh the history
+                } else {
+                    addAlert(`Cleanup failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                addAlert(`Error during cleanup: ${error.message}`, 'error');
+            }
+        }
+        
+        async function loadPhoneNumbers() {
+            try {
+                const response = await fetch('/api/phone-numbers');
+                const result = await response.json();
+                
+                if (result.success && result.numbers) {
+                    const select = document.getElementById('callerPhone');
+                    select.innerHTML = '<option value="">Select your phone number...</option>';
+                    
+                    result.numbers.forEach(number => {
+                        const option = document.createElement('option');
+                        option.value = number.number;
+                        option.textContent = number.number;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading phone numbers:', error);
+            }
+        }
+        
+        function addAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const container = document.querySelector('.call-form');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        // Load call history and phone numbers on page load
+        window.addEventListener('load', function() {
+            loadCallHistory();
+            loadPhoneNumbers();
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('transcriptModal');
+            if (event.target === modal) {
+                closeTranscriptModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    
+    <button onclick="testCall()">Test Call Creation</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testCall() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            const testData = {
+                caller_name: "Test User",
+                caller_phone: "555-123-4567",
+                phone_number: "555-987-6543",
+                account_action: "This is a test call",
+                additional_info: "Test info"
+            };
+            
+            try {
+                console.log('Sending request:', testData);
+                
+                const response = await fetch('/api/calls', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                console.log('Response status:', response.status);
+                
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                resultDiv.innerHTML = `
+                    <h3>Result:</h3>
+                    <p>Status: ${response.status}</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
